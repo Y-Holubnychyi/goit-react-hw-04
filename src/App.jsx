@@ -1,65 +1,88 @@
-import "./App.css";
 import { useState, useEffect } from "react";
-import { saveToLocalStorage, loadFromLocalStorage } from "./utils/localStorage";
-import ContactForm from "./components/ContactForm/ContactForm";
-import SearchBox from "./components/SearchBox/SearchBox";
-import ContactList from "./components/ContactList/ContactList";
+import axios from "axios";
+import SearchBar from "./components/SearchBar/SearchBar";
+import ImageGallery from "./components/ImageGallery/ImageGallery";
+import ImageModal from "./components/ImageModal/ImageModal";
+import Loader from "./components/Loader/Loader";
+import ErrorMessage from "./components/ErrorMessage/ErrorMessage";
+import LoadMoreBtn from "./components/LoadMoreBtn/LoadMoreBtn";
+import toast, { Toaster } from "react-hot-toast";
 
-const initialContacts = [
-  { id: "id-1", name: "Rosie Simpson", number: "459-12-56" },
-  { id: "id-2", name: "Hermione Kline", number: "443-89-12" },
-  { id: "id-3", name: "Eden Clements", number: "645-17-79" },
-  { id: "id-4", name: "Annie Copeland", number: "227-91-26" },
-];
+const ACCESS_KEY = "xCW9qGHehtwspTlfSivxG7tj1AU-NdnadCHDu2MYEIM";
 
 function App() {
-  const [contacts, setContacts] = useState(() => {
-    return loadFromLocalStorage("contacts") || initialContacts;
-  });
-
-  const [filter, setFilter] = useState("");
+  const [images, setImages] = useState([]);
+  const [query, setQuery] = useState("");
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(false);
+  const [selectedImage, setSelectedImage] = useState(null);
 
   useEffect(() => {
-    saveToLocalStorage("contacts", contacts);
-  }, [contacts]);
+    if (!query) return;
 
-  const handleAddContact = (newContact) => {
-    const isDuplicate = contacts.some(
-      (contact) =>
-        contact.name.toLowerCase() === newContact.name.toLowerCase() ||
-        contact.number === newContact.number
-    );
+    const fetchImages = async () => {
+      try {
+        setIsLoading(true);
+        setError(false);
+        const response = await axios.get(
+          "https://api.unsplash.com/search/photos",
+          {
+            params: {
+              query,
+              page,
+              per_page: 12,
+              client_id: ACCESS_KEY,
+            },
+          }
+        );
+        setImages((prev) =>
+          page === 1
+            ? response.data.results
+            : [...prev, ...response.data.results]
+        );
+        setTotalPages(response.data.total_pages);
+      } catch (err) {
+        setError(true);
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
-    if (isDuplicate) {
-      alert("Contact with this name or number already exists!");
+    fetchImages();
+  }, [query, page]);
+
+  const handleSearch = (newQuery) => {
+    if (newQuery === query) {
+      toast.error("You entered the same query!");
       return;
     }
-
-    setContacts((prevContacts) => [...prevContacts, newContact]);
+    setQuery(newQuery);
+    setPage(1);
+    setImages([]);
   };
 
-  const deleteContact = (id) => {
-    setContacts((prevContacts) =>
-      prevContacts.filter((contact) => contact.id !== id)
-    );
+  const handleLoadMore = () => {
+    setPage((prev) => prev + 1);
   };
-
-  const handleFilterChange = (e) => {
-    setFilter(e.target.value);
-  };
-
-  const filteredContacts = contacts.filter(
-    (contact) =>
-      contact.name.toLowerCase().includes(filter.toLowerCase()) ||
-      contact.number.includes(filter)
-  );
 
   return (
-    <div className="appContainer">
-      <h1>Phonebook</h1>
-      <ContactForm onAddContact={handleAddContact} />
-      <SearchBox value={filter} onChange={handleFilterChange} />
-      <ContactList contacts={filteredContacts} onDelete={deleteContact} />
+    <div>
+      <Toaster />
+      <SearchBar onSubmit={handleSearch} />
+      {error && <ErrorMessage />}
+      <ImageGallery images={images} onImageClick={setSelectedImage} />
+      {isLoading && <Loader />}
+      {images.length > 0 && page < totalPages && (
+        <LoadMoreBtn onClick={handleLoadMore} />
+      )}
+      {selectedImage && (
+        <ImageModal
+          image={selectedImage}
+          onClose={() => setSelectedImage(null)}
+        />
+      )}
     </div>
   );
 }
