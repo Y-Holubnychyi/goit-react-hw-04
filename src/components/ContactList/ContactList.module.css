@@ -1,0 +1,11 @@
+.contactList {
+  list-style: none;
+  padding: 0;
+  margin: 20px auto;
+  max-width: 300px;
+}
+
+.contactItem {
+  margin-bottom: 10px;
+  width: 100%;
+}
