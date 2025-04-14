@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import axios from "axios";
 import SearchBar from "./components/SearchBar/SearchBar";
 import ImageGallery from "./components/ImageGallery/ImageGallery";
 import ImageModal from "./components/ImageModal/ImageModal";
@@ -7,8 +6,7 @@ import Loader from "./components/Loader/Loader";
 import ErrorMessage from "./components/ErrorMessage/ErrorMessage";
 import LoadMoreBtn from "./components/LoadMoreBtn/LoadMoreBtn";
 import toast, { Toaster } from "react-hot-toast";
-
-const ACCESS_KEY = "xCW9qGHehtwspTlfSivxG7tj1AU-NdnadCHDu2MYEIM";
+import { fetchImages } from "./services/Api";
 
 function App() {
   const [images, setImages] = useState([]);
@@ -22,27 +20,15 @@ function App() {
   useEffect(() => {
     if (!query) return;
 
-    const fetchImages = async () => {
+    const getImages = async () => {
       try {
         setIsLoading(true);
         setError(false);
-        const response = await axios.get(
-          "https://api.unsplash.com/search/photos",
-          {
-            params: {
-              query,
-              page,
-              per_page: 12,
-              client_id: ACCESS_KEY,
-            },
-          }
-        );
+        const data = await fetchImages(query, page);
         setImages((prev) =>
-          page === 1
-            ? response.data.results
-            : [...prev, ...response.data.results]
+          page === 1 ? data.results : [...prev, ...data.results]
         );
-        setTotalPages(response.data.total_pages);
+        setTotalPages(data.total_pages);
       } catch (err) {
         setError(true);
       } finally {
@@ -50,7 +36,7 @@ function App() {
       }
     };
 
-    fetchImages();
+    getImages();
   }, [query, page]);
 
   const handleSearch = (newQuery) => {

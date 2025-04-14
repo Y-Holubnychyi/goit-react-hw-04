@@ -1,13 +1,22 @@
-.load-more-btn {
-  background-color: #4caf50;
-  color: white;
-  padding: 10px 20px;
-  border: none;
-  cursor: pointer;
-  border-radius: 5px;
-  font-size: 16px;
+.wrapper {
+  display: flex;
+  justify-content: center;
+  margin: 20px 0;
 }
 
-.load-more-btn:hover {
-  background-color: #45a049;
+.button {
+  padding: 12px 24px;
+  background-color: #007aff;
+  color: white;
+  border: none;
+  border-radius: 25px;
+  font-size: 16px;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transition: all 0.3s ease;
+}
+
+.button:hover {
+  background-color: #005ecb;
+  transform: translateY(-2px);
 }
